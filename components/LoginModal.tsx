@@ -3,7 +3,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { login } from "../src/lib/api";
 
 interface LoginModalProps {
@@ -17,23 +17,23 @@ export function LoginModal({
   onOpenChange,
   onLoginSuccess,
 }: LoginModalProps) {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState("admin1");
+  const [password, setPassword] = useState("123321Hoang");
   const [loginError, setLoginError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
     setIsLoading(true);
     try {
-      console.log("Attempting login with:", { username });
+      console.log("Đang thử đăng nhập với:", { username });
       const response = await login(username, password);
       if (!response || !response.access) {
         throw new Error("Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
       }
-      console.log("Login response:", response);
+      console.log("Kết quả đăng nhập:", response);
       onLoginSuccess(response.access, response.refresh);
-      setUsername("");
-      setPassword("");
+      setUsername("admin1"); // Đặt lại giá trị mặc định
+      setPassword("123321Hoang"); // Đặt lại giá trị mặc định
       setLoginError(null);
       onOpenChange(false);
       alert(
@@ -41,7 +41,7 @@ export function LoginModal({
           new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
       );
     } catch (err: any) {
-      console.error("Login error:", err.message);
+      console.error("Lỗi đăng nhập:", err.message);
       setLoginError(err.message);
       alert("Lỗi: " + err.message);
     } finally {
@@ -49,11 +49,18 @@ export function LoginModal({
     }
   };
 
+  // Tự động đăng nhập khi modal mở
+  useEffect(() => {
+    if (isOpen && username && password && !isLoading) {
+      handleLogin();
+    }
+  }, [isOpen, username, password, isLoading]);
+
   return (
     <Dialog
       open={isOpen}
       onOpenChange={(open) => {
-        console.log("Dialog open state changed:", open);
+        console.log("Trạng thái mở dialog thay đổi:", open);
         onOpenChange(open);
       }}
     >
@@ -63,12 +70,12 @@ export function LoginModal({
         </DialogHeader>
         <div className="space-y-4" id="login-description">
           <Input
-            autoFocus // Giữ focus trên input username
+            autoFocus
             placeholder="Tên đăng nhập"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") e.preventDefault(); // Ngăn submit khi nhấn Enter
+              if (e.key === "Enter") e.preventDefault();
             }}
           />
           <Input
@@ -77,7 +84,7 @@ export function LoginModal({
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") e.preventDefault(); // Ngăn submit khi nhấn Enter
+              if (e.key === "Enter") e.preventDefault();
             }}
           />
           {loginError && <p className="text-red-500">{loginError}</p>}
